@@ -12,12 +12,12 @@ using DogWalkerMVC.Models.ViewModels;
 
 namespace DogWalkerMVC.Controllers
 {
-    public class DogsController : Controller
+    public class OwnersController : Controller
 
     {
         private readonly IConfiguration _config;
 
-        public DogsController(IConfiguration config)
+        public OwnersController(IConfiguration config)
         {
             _config = config;
         }
@@ -29,7 +29,7 @@ namespace DogWalkerMVC.Controllers
                 return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             }
         }
-        // GET: Dogs
+        // GET: Owners
         public ActionResult Index()
         {
             using (SqlConnection conn = Connection)
@@ -37,43 +37,42 @@ namespace DogWalkerMVC.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT i.Id, i.Name, i.Breed, i.Notes, i.ImageUrl, i.OwnerId, c.Name
-                                      FROM Dog i LEFT JOIN Owner c 
+                    cmd.CommandText = @"SELECT i.Id, i.Name, i.Address, i.Phone, i.NeighborhoodId, c.Name
+                                      FROM Owner i LEFT JOIN Neighborhood c 
                                       ON i.OwnerId = c.Id";
 
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    List<Dog> dogs = new List<Dog>();
+                    List<Owner>owners = new List<Owner>();
                     while (reader.Read())
                     {
-                        Dog dog = new Dog
+                        Owner owner = new Owner
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Breed = reader.GetString(reader.GetOrdinal("Breed")),
-                            Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                            ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
-                            OwnerId = reader.GetInt32(reader.GetOrdinal("OwnerId")),
-                            Owner = new Owner()
+                            Address = reader.GetString(reader.GetOrdinal("Address")),
+                            Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                            NeighborhoodId = reader.GetInt32(reader.GetOrdinal("OwnerId")),
+                            Neighborhood = new Neighborhood()
                             {
                                 Name = reader.GetString(reader.GetOrdinal("Name"))
                             }
 
                         };
 
-                        dogs.Add(dog);
+                        owners.Add(owner);
                     }
 
                     reader.Close();
 
-                    return View(dogs);
+                    return View(owners);
                 }
             }
 
         }
 
 
-        // GET: Dogs/Details/1
+        // GET: Owner/Details/1
         public ActionResult Details(int id)
         {
             {
@@ -82,49 +81,48 @@ namespace DogWalkerMVC.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = "SELECT Id, Name, Breed, OwmerId, Notes, ImageUrl FROM Dog WHERE Id = @id";
+                        cmd.CommandText = "SELECT Id, Name, Adresss, NeighborhoodrId, Phone FROM Owner WHERE Id = @id";
 
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         var reader = cmd.ExecuteReader();
-                        Dog dog = null;
+                        Owner owner = null;
 
                         if (reader.Read())
                         {
-                            dog = new Dog()
+                            owner = new Owner()
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                 Name = reader.GetString(reader.GetOrdinal("Name")),
-                                Breed = reader.GetString(reader.GetOrdinal("Breed")),
-                                Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                                ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
-                                OwnerId = reader.GetInt32(reader.GetOrdinal("OwnerId"))
+                                Address = reader.GetString(reader.GetOrdinal("Address")),
+                                Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                                NeighborhoodId = reader.GetInt32(reader.GetOrdinal("NeighborhoodId"))
                             };
 
                         }
                         reader.Close();
-                        return View(dog);
+                        return View(owner);
                     }
                 }
             }
         }
 
-        // GET: Dogs/Create
+        // GET: Owners/Create
         public ActionResult Create()
         {
-            var ownerOptions = GetOwnerOptions();
-            var viewModel = new DogEditViewmodel()
+            var neighborhoodOptions = GetNeighborhoodOptions();
+            var viewModel = new OwnerEditViewmodel()
             {
-                OwnerOptions = ownerOptions
+                NeighborhoodOptions = neighborhoodOptions
 
             };
             return View(viewModel);
         }
 
-        // POST: Dogs/Create
+        // POST: Owners/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(DogEditViewmodel dog)
+        public ActionResult Create(OwnerEditViewmodel owner)
         {
             try
             {
@@ -133,18 +131,17 @@ namespace DogWalkerMVC.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"INSERT INTO Dog (Name, Breed, Notes, ImageUrl, OwnerId)
+                        cmd.CommandText = @"INSERT INTO Owner (Name, Address, Phone, NeighborhoodId)
                                             OUTPUT INSERTED.Id
-                                            VALUES (@name, @breed, @notes, @imageUrl, @ownerId)";
+                                            VALUES (@name, @address, @phone, @neighborhoodId)";
 
-                        cmd.Parameters.Add(new SqlParameter("@name", dog.Name));
-                        cmd.Parameters.Add(new SqlParameter("@breed", dog.Breed));
-                        cmd.Parameters.Add(new SqlParameter("@notes", dog.Notes));
-                        cmd.Parameters.Add(new SqlParameter("@imageUrl", dog.ImageUrl));
-                        cmd.Parameters.Add(new SqlParameter("@ownerId", dog.OwnerId));
+                        cmd.Parameters.Add(new SqlParameter("@name", owner.Name));
+                        cmd.Parameters.Add(new SqlParameter("@address", owner.Address));
+                        cmd.Parameters.Add(new SqlParameter("@phone", owner.Phone));
+                        cmd.Parameters.Add(new SqlParameter("@neighborhoodId", owner.NeighborhoodId));
 
                         var id = (int)cmd.ExecuteScalar();
-                        dog.Id = id;
+                        owner.Id = id;
                         // TODO: Add insert logic here
 
                         return RedirectToAction(nameof(Index));
@@ -157,30 +154,29 @@ namespace DogWalkerMVC.Controllers
             }
         }
 
-        // GET: Dogs/Edit/1
+        // GET: Owners/Edit/1
         public ActionResult Edit(int id)
         {
-            var dog = GetDogById(id);
-            var ownerOptions = GetOwnerOptions();
-            var viewModel = new DogEditViewmodel()
+            var owner = GetOwnerById(id);
+            var neighborhoodOptions = GetNeighborhoodOptions();
+            var viewModel = new OwnerEditViewmodel()
             {
-                Id = dog.Id,
-                Name = dog.Name,
-                Breed = dog.Breed,
-                OwnerId = dog.OwnerId,
-                Notes = dog.Notes,
-                ImageUrl = dog.ImageUrl,
-                OwnerOptions = ownerOptions
+                Id = owner.Id,
+                Name = owner.Name,
+                Address = owner.Address,
+                NeighborhoodId = owner.NeighborhoodId,
+                Phone = owner.Phone,
+                NeighborhoodOptions = neighborhoodOptions
 
 
             };
             return View(viewModel);
         }
 
-        // POST: Dogs/Edit/1
+        // POST: Owners/Edit/1
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, DogEditViewmodel dog)
+        public ActionResult Edit(int id, OwnerEditViewmodel owner)
         {
             try
             {
@@ -189,19 +185,17 @@ namespace DogWalkerMVC.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"UPDATE Dog 
+                        cmd.CommandText = @"UPDATE Owner
                                             SET Name = @name, 
-                                                Breed = @breed, 
-                                                Notes = @notes, 
-                                                ImageUrl = @imageUrl, 
-                                                OwnerId = @ownerId
+                                                Address = @address, 
+                                                Phone = @phone, 
+                                                NeighborhoodId = @neighborhoodId
                                             WHERE Id = @id";
 
-                        cmd.Parameters.Add(new SqlParameter("@name", dog.Name));
-                        cmd.Parameters.Add(new SqlParameter("@breed", dog.Breed));
-                        cmd.Parameters.Add(new SqlParameter("@notes", dog.Notes));
-                        cmd.Parameters.Add(new SqlParameter("@imageUrl", dog.ImageUrl));
-                        cmd.Parameters.Add(new SqlParameter("@ownerId", dog.OwnerId));
+                        cmd.Parameters.Add(new SqlParameter("@name", owner.Name));
+                        cmd.Parameters.Add(new SqlParameter("@address", owner.Address));
+                        cmd.Parameters.Add(new SqlParameter("@phone", owner.Phone));
+                        cmd.Parameters.Add(new SqlParameter("@neighborhoodId", owner.NeighborhoodId));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         var rowsAffected = cmd.ExecuteNonQuery();
@@ -221,18 +215,18 @@ namespace DogWalkerMVC.Controllers
             }
         }
 
-        // GET: Dogs/Delete/1
+        // GET: Owners/Delete/1
         public ActionResult Delete(int id)
         {
-            var dog = GetDogById(id);
-            return View(dog);
+            var owner = GetOwnerById(id);
+            return View(owner);
         }
 
 
-        // POST: Dogs/Delete/1
+        // POST: Owners/Delete/1
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, Dog dog)
+        public ActionResult Delete(int id, Owner owner)
         {
             try
             {
@@ -241,7 +235,7 @@ namespace DogWalkerMVC.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = "DELETE FROM Dog WHERE Id = @id";
+                        cmd.CommandText = "DELETE FROM Owner WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         cmd.ExecuteNonQuery();
@@ -255,14 +249,14 @@ namespace DogWalkerMVC.Controllers
                 return View();
             }
         }
-        private List<SelectListItem> GetOwnerOptions()
+        private List<SelectListItem> GetNeighborhoodOptions()
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, Name FROM Owner";
+                    cmd.CommandText = "SELECT Id, Name FROM Neighborhood";
 
 
 
@@ -285,35 +279,34 @@ namespace DogWalkerMVC.Controllers
             }
         }
 
-        private Dog GetDogById(int id)
+        private Owner GetOwnerById(int id)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, Name, Breed, OwnerId, Breed, ImageUrl FROM Dog WHERE Id = @id";
+                    cmd.CommandText = "SELECT Id, Name, Address, NeighborhoodId, Phone FROM Owner WHERE Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
                     var reader = cmd.ExecuteReader();
-                    Dog dog = null;
+                    Owner owner = null;
 
                     if (reader.Read())
                     {
-                        dog = new Dog()
+                        owner = new Owner()
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Breed = reader.GetString(reader.GetOrdinal("Breed")),
-                            Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                            ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
-                            OwnerId = reader.GetInt32(reader.GetOrdinal("OwnerId"))
+                            Address = reader.GetString(reader.GetOrdinal("Address")),
+                            Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                            NeighborhoodId = reader.GetInt32(reader.GetOrdinal("NeighborhoodId"))
                         };
 
                     }
                     reader.Close();
-                    return dog;
+                    return owner;
                 }
             }
         }
