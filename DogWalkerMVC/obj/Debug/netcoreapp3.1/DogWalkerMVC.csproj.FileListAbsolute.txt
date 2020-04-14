@@ -127,3 +127,4 @@ C:\Users\Luis Chavez\source\repos\DogWalkerMVC\DogWalkerMVC\obj\Debug\netcoreapp
 C:\Users\Luis Chavez\source\repos\DogWalkerMVC\DogWalkerMVC\obj\Debug\netcoreapp3.1\DogWalkerMVC.dll
 C:\Users\Luis Chavez\source\repos\DogWalkerMVC\DogWalkerMVC\obj\Debug\netcoreapp3.1\DogWalkerMVC.pdb
 C:\Users\Luis Chavez\source\repos\DogWalkerMVC\DogWalkerMVC\obj\Debug\netcoreapp3.1\DogWalkerMVC.genruntimeconfig.cache
+C:\Users\Luis Chavez\source\repos\DogWalkerMVC\DogWalkerMVC\obj\Debug\netcoreapp3.1\Razor\Views\Dogs\Index.cshtml.g.cs
